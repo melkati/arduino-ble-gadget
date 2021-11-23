@@ -23,6 +23,10 @@ GadgetBle::GadgetBle(DataType dataType) {
     setDataType(dataType);
 }
 
+void GadgetBle::setSampleBufferSizeBytes(size_t value) {
+    _sampleBufferSizeBytes = value;
+}
+
 void GadgetBle::enableWifiSetupSettings(
     std::function<void(std::string, std::string)> onWifiSettingsChanged) {
     _onWifiSettingsChanged = onWifiSettingsChanged;
@@ -556,6 +560,6 @@ bool GadgetBle::_handleDownload() {
 
 uint16_t GadgetBle::_computeRealSampleBufferSize() {
     return static_cast<uint16_t>(
-               std::floor(SAMPLE_BUFFER_SIZE_BYTES / _sampleType.sampleSize)) *
+               std::floor(sampleBufferSizeBytes / _sampleType.sampleSize)) *
            _sampleType.sampleSize;
 }

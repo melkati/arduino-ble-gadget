@@ -39,7 +39,6 @@ static const char* const WIFI_PWD_CHAR_UUID =
 static const char* const GADGET_NAME = "S";
 static const size_t DOWNLOAD_PKT_SIZE = 20;
 static const size_t MAX_SAMPLE_SIZE = 12; // TODO: Adapt depending on data type
-static const size_t SAMPLE_BUFFER_SIZE_BYTES = 30000;
 
 class GadgetBle;
 
@@ -75,6 +74,7 @@ class GadgetBle: BLECharacteristicCallbacks, BLEServerCallbacks {
         std::map<Unit, UnitEnc> unitEnc;
     };
     explicit GadgetBle(DataType dataType);
+    void setSampleBufferSizeBytes(size_t);
     void enableWifiSetupSettings(
         std::function<void(std::string, std::string)> onWifiSettingsChanged);
     void setCurrentWifiSsid(std::string ssid);
@@ -126,12 +126,13 @@ class GadgetBle: BLECharacteristicCallbacks, BLEServerCallbacks {
 
     String _deviceIdString;
 
+    size_t _sampleBufferSizeBytes = 30000;
     int64_t _lastCacheTime = 0;
     uint32_t _sampleIntervalMs = 600000; // default at 10 min
     uint32_t _sampleBufferIdx = 0;
     bool _sampleBufferWraped = false;
     std::array<uint8_t, MAX_SAMPLE_SIZE> _currentSample = {};
-    std::array<uint8_t, SAMPLE_BUFFER_SIZE_BYTES> _sampleBuffer = {};
+    std::array<uint8_t, sampleBufferSizeBytes> _sampleBuffer = {};
     uint16_t _downloadSeqNumber = 0;
     bool _downloading = false;
     bool _deviceConnected = false;

@@ -560,6 +560,6 @@ bool GadgetBle::_handleDownload() {
 
 uint16_t GadgetBle::_computeRealSampleBufferSize() {
     return static_cast<uint16_t>(
-               std::floor(sampleBufferSizeBytes / _sampleType.sampleSize)) *
+               std::floor(_sampleBufferSizeBytes / _sampleType.sampleSize)) *
            _sampleType.sampleSize;
 }

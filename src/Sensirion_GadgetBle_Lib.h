@@ -132,7 +132,7 @@ class GadgetBle: BLECharacteristicCallbacks, BLEServerCallbacks {
     uint32_t _sampleBufferIdx = 0;
     bool _sampleBufferWraped = false;
     std::array<uint8_t, MAX_SAMPLE_SIZE> _currentSample = {};
-    std::array<uint8_t, sampleBufferSizeBytes> _sampleBuffer = {};
+    std::array<uint8_t, _sampleBufferSizeBytes> _sampleBuffer = {};
     uint16_t _downloadSeqNumber = 0;
     bool _downloading = false;
     bool _deviceConnected = false;

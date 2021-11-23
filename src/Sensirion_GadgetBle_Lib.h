@@ -126,7 +126,7 @@ class GadgetBle: BLECharacteristicCallbacks, BLEServerCallbacks {
 
     String _deviceIdString;
 
-    size_t _sampleBufferSizeBytes = 30000;
+    static size_t _sampleBufferSizeBytes = 30000;
     int64_t _lastCacheTime = 0;
     uint32_t _sampleIntervalMs = 600000; // default at 10 min
     uint32_t _sampleBufferIdx = 0;

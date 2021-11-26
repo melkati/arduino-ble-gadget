@@ -23,6 +23,10 @@ GadgetBle::GadgetBle(DataType dataType) {
     setDataType(dataType);
 }
 
+void GadgetBle::setSampleIntervalMs(uint32_t value) {
+    _sampleIntervalMs = value;
+}
+
 void GadgetBle::enableWifiSetupSettings(
     std::function<void(std::string, std::string)> onWifiSettingsChanged) {
     _onWifiSettingsChanged = onWifiSettingsChanged;

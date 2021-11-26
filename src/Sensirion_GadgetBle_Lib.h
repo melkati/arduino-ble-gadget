@@ -76,6 +76,7 @@ class GadgetBle: BLECharacteristicCallbacks, BLEServerCallbacks {
         std::map<Unit, UnitEnc> unitEnc;
     };
     explicit GadgetBle(DataType dataType);
+    void setSampleIntervalMs(uint32_t value);
     void enableWifiSetupSettings(
         std::function<void(std::string, std::string)> onWifiSettingsChanged);
     void setCurrentWifiSsid(std::string ssid);

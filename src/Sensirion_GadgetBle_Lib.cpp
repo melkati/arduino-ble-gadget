@@ -249,10 +249,10 @@ void GadgetBle::commit() {
     _bleAdvertising->start();
 }
 
-void GadgetBle::handleEvents() {
-    _updateConnectionState();
-    _handleDownload();
-}
+// void GadgetBle::handleEvents() {
+//     _updateConnectionState();
+//     _handleDownload();
+// }
 
 // BLEServerCallbacks
 
@@ -316,22 +316,22 @@ void GadgetBle::_bleInit() {
 
     // - Download Service: Sample Count Characeristic
     _sampleCntChar = bleDownloadService->createCharacteristic(
-        SAMPLE_CNT_CHAR_UUID, BLECharacteristic::PROPERTY_READ);
+        SAMPLE_CNT_CHAR_UUID, NIMBLE_PROPERTY::READ);
     _sampleCntChar->setValue(_sampleBufferSize);
 
     // - Download Service: Logging Interval Characteristic
     BLECharacteristic* loggerIntervalChar =
         bleDownloadService->createCharacteristic(
-            LOGGER_INTERVAL_UUID, BLECharacteristic::PROPERTY_READ |
-                                      BLECharacteristic::PROPERTY_WRITE);
+            LOGGER_INTERVAL_UUID, NIMBLE_PROPERTY::READ |
+                                      NIMBLE_PROPERTY::WRITE);
     loggerIntervalChar->setValue(_sampleIntervalMs);
     loggerIntervalChar->setCallbacks(this);
 
     // - Download Service: Data Transfer Characteristic
     _transferChar = bleDownloadService->createCharacteristic(
-        TRANSFER_NOTIFY_UUID, BLECharacteristic::PROPERTY_NOTIFY);
-    _transferDescr = new BLE2902();
-    _transferChar->addDescriptor(_transferDescr);
+        TRANSFER_NOTIFY_UUID, NIMBLE_PROPERTY::NOTIFY);
+    // _transferDescr = new BLE2902();
+    // _transferChar->addDescriptor(_transferDescr);
 
     // - Download Service: Start
     bleDownloadService->start();
@@ -343,15 +343,15 @@ void GadgetBle::_bleInit() {
     // - Gadget Settings Service: WiFi SSID Characteristic
     if (_onWifiSettingsChanged != NULL) {
         _wifiSsidChar = bleGadgetSettingsService->createCharacteristic(
-            WIFI_SSID_CHAR_UUID, BLECharacteristic::PROPERTY_READ |
-                                     BLECharacteristic::PROPERTY_WRITE);
+            WIFI_SSID_CHAR_UUID, NIMBLE_PROPERTY::READ |
+                                     NIMBLE_PROPERTY::WRITE);
         _wifiSsidChar->setValue(_wifiSsidSetting);
         _wifiSsidChar->setCallbacks(this);
 
         // - Gadget Settings Service: WiFi Password Characteristic
         BLECharacteristic* wifiPwdChar =
             bleGadgetSettingsService->createCharacteristic(
-                WIFI_PWD_CHAR_UUID, BLECharacteristic::PROPERTY_WRITE);
+                WIFI_PWD_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
         wifiPwdChar->setValue("n/a");
         wifiPwdChar->setCallbacks(this);
     }
@@ -468,20 +468,20 @@ uint16_t GadgetBle::_convertHCHOV1(float value) {
 
 // Download Logger Related
 
-void GadgetBle::_updateConnectionState() {
-    // connecting
-    if (_deviceConnected && !_oldDeviceConnected) {
-        _downloadSeqNumber = 0;
-        _oldDeviceConnected = _deviceConnected;
-    }
+// void GadgetBle::_updateConnectionState() {
+//     // connecting
+//     if (_deviceConnected && !_oldDeviceConnected) {
+//         _downloadSeqNumber = 0;
+//         _oldDeviceConnected = _deviceConnected;
+//     }
 
-    // disconnecting
-    if (!_deviceConnected && _oldDeviceConnected) {
-        _transferDescr->setNotifications(false);
-        _downloadSeqNumber = 0;
-        _oldDeviceConnected = _deviceConnected;
-    }
-}
+//     // disconnecting
+//     if (!_deviceConnected && _oldDeviceConnected) {
+//         _transferDescr->setNotifications(false);
+//         _downloadSeqNumber = 0;
+//         _oldDeviceConnected = _deviceConnected;
+//     }
+// }
 
 uint16_t GadgetBle::_computeBufferSize() {
     return static_cast<uint16_t>(
@@ -493,63 +493,63 @@ uint16_t GadgetBle::_computeBufferSize() {
 bool GadgetBle::_handleDownload() {
     uint16_t sampleCnt = _computeBufferSize();
 
-    // Download Finished
-    if (_downloading && _downloadSeqNumber >= sampleCnt) {
-        _downloading = false;
-        _transferDescr->setNotifications(false);
-        _downloadSeqNumber = 0;
-        return false;
-    }
+    // // Download Finished
+    // if (_downloading && _downloadSeqNumber >= sampleCnt) {
+    //     _downloading = false;
+    //     _transferDescr->setNotifications(false);
+    //     _downloadSeqNumber = 0;
+    //     return false;
+    // }
 
-    if (_transferDescr->getNotifications()) {
-        _downloading = true;
-        if (_downloadSeqNumber == 0) {
-            // send header
-            sampleCnt -= 1;
+    // if (_transferDescr->getNotifications()) {
+    //     _downloading = true;
+    //     if (_downloadSeqNumber == 0) {
+    //         // send header
+    //         sampleCnt -= 1;
 
-            uint32_t ageLastSampleMs = static_cast<uint32_t>(
-                ((esp_timer_get_time() - _lastCacheTime) / 1000) + 0.5f);
+    //         uint32_t ageLastSampleMs = static_cast<uint32_t>(
+    //             ((esp_timer_get_time() - _lastCacheTime) / 1000) + 0.5f);
 
-            _downloadHeader[4] = _sampleType.dlSampleType;
-            _downloadHeader[5] = _sampleType.dlSampleType >> 8;
-            _downloadHeader[6] = _sampleIntervalMs;
-            _downloadHeader[7] = _sampleIntervalMs >> 8;
-            _downloadHeader[8] = _sampleIntervalMs >> 16;
-            _downloadHeader[9] = _sampleIntervalMs >> 24;
-            _downloadHeader[10] = ageLastSampleMs;
-            _downloadHeader[11] = ageLastSampleMs >> 8;
-            _downloadHeader[12] = ageLastSampleMs >> 16;
-            _downloadHeader[13] = ageLastSampleMs >> 24;
-            _downloadHeader[14] = sampleCnt;
-            _downloadHeader[15] = (sampleCnt >> 8);
-            _transferChar->setValue(_downloadHeader.data(),
-                                    _downloadHeader.size());
-            _downloadSeqNumber++;
-            _transferChar->notify();
-        } else {
-            std::array<uint8_t, DOWNLOAD_PKT_SIZE> valueBuffer = {};
-            valueBuffer[0] = _downloadSeqNumber;
-            valueBuffer[1] = (_downloadSeqNumber >> 8);
-            for (int j = 0; j < _sampleType.sampleCntPerPacket; j++) {
-                for (int i = 0; i < _sampleType.sampleSize; i++) {
-                    uint32_t idx = ((_downloadSeqNumber - 1) *
-                                    (_sampleType.sampleSize *
-                                     _sampleType.sampleCntPerPacket)) +
-                                   i + (j * _sampleType.sampleSize);
-                    if (_sampleBufferWraped) {
-                        idx = (_sampleBufferIdx + idx) % _sampleBufferCapacity;
-                    }
-                    valueBuffer[i + 2 + (j * _sampleType.sampleSize)] =
-                        _sampleBuffer[idx];
-                }
-            }
+    //         _downloadHeader[4] = _sampleType.dlSampleType;
+    //         _downloadHeader[5] = _sampleType.dlSampleType >> 8;
+    //         _downloadHeader[6] = _sampleIntervalMs;
+    //         _downloadHeader[7] = _sampleIntervalMs >> 8;
+    //         _downloadHeader[8] = _sampleIntervalMs >> 16;
+    //         _downloadHeader[9] = _sampleIntervalMs >> 24;
+    //         _downloadHeader[10] = ageLastSampleMs;
+    //         _downloadHeader[11] = ageLastSampleMs >> 8;
+    //         _downloadHeader[12] = ageLastSampleMs >> 16;
+    //         _downloadHeader[13] = ageLastSampleMs >> 24;
+    //         _downloadHeader[14] = sampleCnt;
+    //         _downloadHeader[15] = (sampleCnt >> 8);
+    //         _transferChar->setValue(_downloadHeader.data(),
+    //                                 _downloadHeader.size());
+    //         _downloadSeqNumber++;
+    //         _transferChar->notify();
+    //     } else {
+    //         std::array<uint8_t, DOWNLOAD_PKT_SIZE> valueBuffer = {};
+    //         valueBuffer[0] = _downloadSeqNumber;
+    //         valueBuffer[1] = (_downloadSeqNumber >> 8);
+    //         for (int j = 0; j < _sampleType.sampleCntPerPacket; j++) {
+    //             for (int i = 0; i < _sampleType.sampleSize; i++) {
+    //                 uint32_t idx = ((_downloadSeqNumber - 1) *
+    //                                 (_sampleType.sampleSize *
+    //                                  _sampleType.sampleCntPerPacket)) +
+    //                                i + (j * _sampleType.sampleSize);
+    //                 if (_sampleBufferWraped) {
+    //                     idx = (_sampleBufferIdx + idx) % _sampleBufferCapacity;
+    //                 }
+    //                 valueBuffer[i + 2 + (j * _sampleType.sampleSize)] =
+    //                     _sampleBuffer[idx];
+    //             }
+    //         }
 
-            _transferChar->setValue(valueBuffer.data(), valueBuffer.size());
-            _downloadSeqNumber++;
-            _transferChar->notify();
-        }
-        return true;
-    }
+    //         _transferChar->setValue(valueBuffer.data(), valueBuffer.size());
+    //         _downloadSeqNumber++;
+    //         _transferChar->notify();
+    //     }
+    //     return true;
+    // }
 
     return false;
 }

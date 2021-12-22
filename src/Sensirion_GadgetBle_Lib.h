@@ -11,10 +11,12 @@
 
 #include "esp_timer.h"
 
-#include <BLE2902.h>
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
+#include "NimBLEDevice.h"
+
+// #include <BLE2902.h>
+// #include <BLEDevice.h>
+// #include <BLEServer.h>
+// #include <BLEUtils.h>
 
 // BLE Characteristics and Service Uuids
 
@@ -39,7 +41,7 @@ static const char* const WIFI_PWD_CHAR_UUID =
 static const char* const GADGET_NAME = "S";
 static const size_t DOWNLOAD_PKT_SIZE = 20;
 static const size_t MAX_SAMPLE_SIZE = 12; // TODO: Adapt depending on data type
-static const size_t SAMPLE_BUFFER_SIZE_BYTES = 30000;
+static const size_t SAMPLE_BUFFER_SIZE_BYTES = 5000;
 
 class GadgetBle;
 
@@ -119,7 +121,7 @@ class GadgetBle: BLECharacteristicCallbacks, BLEServerCallbacks {
     uint16_t _sampleBufferCapacity;
 
     BLEAdvertising* _bleAdvertising;
-    BLE2902* _transferDescr;
+    // BLE2902* _transferDescr;
     BLECharacteristic* _transferChar;
     BLECharacteristic* _sampleCntChar;
     BLECharacteristic* _wifiSsidChar;

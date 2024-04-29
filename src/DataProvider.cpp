@@ -115,6 +115,25 @@ void DataProvider::setSampleConfig(DataType dataType) {
     _sampleHistory.setSampleSize(_sampleConfig.sampleSizeBytes);
 }
 
+void DataProvider::setHistoryInterval(int interval) {
+    _historyIntervalMilliSeconds = static_cast<uint64_t>(interval);
+    _sampleHistory.reset();
+    _BLELibrary.characteristicSetValue(
+        NUMBER_OF_SAMPLES_UUID, _sampleHistory.numberOfSamplesInHistory());
+}
+
+uint64_t DataProvider::getHistoryInterval() const {
+    return _historyIntervalMilliSeconds;
+}
+
+bool DataProvider::historyIntervalChanged() {
+    if (_historyIntervalChanged) {
+        _historyIntervalChanged = false;
+        return true;
+    }
+    return false;
+}
+
 String DataProvider::getDeviceIdString() const {
     char cDevId[6];
     std::string macAddress = _BLELibrary.getDeviceAddress();
@@ -249,6 +268,7 @@ void DataProvider::onHistoryIntervalChange(int interval) {
     _sampleHistory.reset();
     _BLELibrary.characteristicSetValue(
         NUMBER_OF_SAMPLES_UUID, _sampleHistory.numberOfSamplesInHistory());
+    _historyIntervalChanged = true;
 }
 
 void DataProvider::onConnectionEvent() {

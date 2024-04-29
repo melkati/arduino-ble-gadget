@@ -59,6 +59,9 @@ class DataProvider: public IProviderCallbacks {
     void handleDownload();
     void setBatteryLevel(int value);
     void setSampleConfig(DataType dataType);
+    void setHistoryInterval(int interval);
+    uint64_t getHistoryInterval() const;
+    bool historyIntervalChanged();
     String getDeviceIdString() const;    
     String getWifiSSID();
     String getWifiPassword();
@@ -95,6 +98,7 @@ class DataProvider: public IProviderCallbacks {
 
     SampleConfig _sampleConfig;
     uint64_t _historyIntervalMilliSeconds = 600000; // = 10 minutes
+    bool _historyIntervalChanged = false;
     uint64_t _latestHistoryTimeStamp = 0;
     uint64_t _latestHistoryTimeStampAtDownloadStart = 0;
     IWifiLibraryWrapper* _pWifiLibaray;

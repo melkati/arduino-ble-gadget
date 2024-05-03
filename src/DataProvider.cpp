@@ -19,6 +19,7 @@ void DataProvider::begin() {
     _BLELibrary.startAdvertising();
 }
 
+// For old version of the Sensirion's library
 void DataProvider::writeValueToCurrentSample(float value,
                                              SignalType signalType) {
     // Check for valid value
@@ -33,14 +34,38 @@ void DataProvider::writeValueToCurrentSample(float value,
     }
 
     // Get relevant metaData
-    uint16_t (*encodingFunction)(float value) =
-        _sampleConfig.sampleSlots.at(signalType).encodingFunction;
+    uint16_t (*converterFunction)(float value) =
+        _sampleConfig.sampleSlots.at(signalType).converterFunction;
     size_t offset = _sampleConfig.sampleSlots.at(signalType).offset;
 
     // Convert float to 16 bit int
-    uint16_t convertedValue = encodingFunction(value);
+    uint16_t convertedValue = converterFunction(value);
     _currentSample.writeValue(convertedValue, offset);
 }
+
+// For new version of the Sensirion's library
+// void DataProvider::writeValueToCurrentSample(float value,
+//                                              SignalType signalType) {
+//     // Check for valid value
+//     if (isnan(value)) {
+//         return;
+//     }
+
+//     // Check for correct signal type
+//     if (_sampleConfig.sampleSlots.count(signalType) ==
+//         0) { // implies signal type is not part of sample
+//         return;
+//     }
+
+//     // Get relevant metaData
+//     uint16_t (*encodingFunction)(float value) =
+//         _sampleConfig.sampleSlots.at(signalType).encodingFunction;
+//     size_t offset = _sampleConfig.sampleSlots.at(signalType).offset;
+
+//     // Convert float to 16 bit int
+//     uint16_t convertedValue = encodingFunction(value);
+//     _currentSample.writeValue(convertedValue, offset);
+// }
 
 void DataProvider::commitSample() {
     uint64_t currentTimeStamp = millis();

@@ -145,6 +145,7 @@ void DataProvider::setHistoryInterval(int interval) {
     _sampleHistory.reset();
     _BLELibrary.characteristicSetValue(
         NUMBER_OF_SAMPLES_UUID, _sampleHistory.numberOfSamplesInHistory());
+    _historyIntervalChanged = true;
 }
 
 uint64_t DataProvider::getHistoryInterval() const {

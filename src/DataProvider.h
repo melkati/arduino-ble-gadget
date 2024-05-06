@@ -39,6 +39,10 @@
 #include "SampleHistoryRingBuffer.h"
 #include "Sensirion_UPT_Core.h"
 
+#ifndef HISTORY_INTERVAL_MILISECONDS
+#define HISTORY_INTERVAL_MILISECONDS 600000 // 10 minutes
+#endif
+
 class DataProvider: public IProviderCallbacks {
   public:
     explicit DataProvider(IBLELibraryWrapper& libraryWrapper,
@@ -97,7 +101,7 @@ class DataProvider: public IProviderCallbacks {
     bool _enalbeFRCService;
 
     SampleConfig _sampleConfig;
-    uint64_t _historyIntervalMilliSeconds = 60000; // = 1 minute
+    uint64_t _historyIntervalMilliSeconds = HISTORY_INTERVAL_MILISECONDS;
     bool _historyIntervalChanged = false;
     uint64_t _latestHistoryTimeStamp = 0;
     uint64_t _latestHistoryTimeStampAtDownloadStart = 0;

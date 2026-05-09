@@ -15,40 +15,45 @@ struct WrapperPrivateData: public BLECharacteristicCallbacks,
     NimBLECharacteristic* characteristics[MAX_NUMBER_OF_CHARACTERISTICS] = {
         nullptr};
 
-    // BLEServerCallbacks
-    void onConnect(BLEServer* serverInst);
-    void onDisconnect(BLEServer* serverInst);
+    // BLEServerCallbacks (NimBLE 2.x signatures)
+    void onConnect(NimBLEServer* serverInst, NimBLEConnInfo& connInfo) override;
+    void onDisconnect(NimBLEServer* serverInst, NimBLEConnInfo& connInfo,
+                      int reason) override;
 
-    // BLECharacteristicCallbacks
-    void onWrite(BLECharacteristic* characteristic);
+    // BLECharacteristicCallbacks (NimBLE 2.x signatures)
+    void onWrite(NimBLECharacteristic* characteristic,
+                 NimBLEConnInfo& connInfo) override;
     void onSubscribe(NimBLECharacteristic* pCharacteristic,
-                     ble_gap_conn_desc* desc, uint16_t subValue);
+                     NimBLEConnInfo& connInfo, uint16_t subValue) override;
 
     // DataProvider Callbacks
     IProviderCallbacks* providerCallbacks = nullptr;
 };
 
-void WrapperPrivateData::onConnect(NimBLEServer* serverInst) {
+void WrapperPrivateData::onConnect(NimBLEServer* serverInst,
+                                   NimBLEConnInfo& connInfo) {
     if (providerCallbacks != nullptr) {
         providerCallbacks->onConnectionEvent();
     }
 }
 
-void WrapperPrivateData::onDisconnect(BLEServer* serverInst) {
+void WrapperPrivateData::onDisconnect(NimBLEServer* serverInst,
+                                      NimBLEConnInfo& connInfo, int reason) {
     if (providerCallbacks != nullptr) {
         providerCallbacks->onConnectionEvent();
     }
 }
 
 void WrapperPrivateData::onSubscribe(NimBLECharacteristic* pCharacteristic,
-                                     ble_gap_conn_desc* desc,
+                                     NimBLEConnInfo& connInfo,
                                      uint16_t subValue) {
     if ((providerCallbacks != nullptr) && (subValue == 1)) {
         providerCallbacks->onDownloadRequest();
     }
 }
 
-void WrapperPrivateData::onWrite(BLECharacteristic* characteristic) {
+void WrapperPrivateData::onWrite(NimBLECharacteristic* characteristic,
+                                  NimBLEConnInfo& connInfo) {
     if (providerCallbacks == nullptr) {
         return;
     }
@@ -106,9 +111,9 @@ void NimBLELibraryWrapper::init() {
     _data->BLEDeviceRunning = true;
 
     _data->pNimBLEAdvertising = NimBLEDevice::getAdvertising();
-    // Helps with iPhone connection issues (copy/paste)
-    _data->pNimBLEAdvertising->setMinPreferred(0x06);
-    _data->pNimBLEAdvertising->setMaxPreferred(0x12);
+    // Helps with iPhone connection issues; setPreferredParams replaces
+    // setMinPreferred/setMaxPreferred from NimBLE 1.x.
+    _data->pNimBLEAdvertising->setPreferredParams(0x06, 0x12);
 }
 
 void NimBLELibraryWrapper::createServer() {
@@ -216,7 +221,9 @@ std::string NimBLELibraryWrapper::characteristicGetValue(const char* uuid) {
     if (nullptr == pCharacteristic) {
         return "";
     }
-    return pCharacteristic->getValue();
+    // NimBLE 2.x: getValue() returns NimBLEAttValue; convert explicitly.
+    NimBLEAttValue v = pCharacteristic->getValue();
+    return std::string(reinterpret_cast<const char*>(v.data()), v.size());
 }
 
 bool NimBLELibraryWrapper::characteristicNotify(const char* uuid) {

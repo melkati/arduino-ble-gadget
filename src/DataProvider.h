@@ -39,6 +39,9 @@
 #include "SampleHistoryRingBuffer.h"
 #include "Sensirion_UPT_Core.h"
 
+// UPT Core 0.9.1+ moved types to sensirion::upt::core namespace
+using namespace sensirion::upt::core;
+
 #ifndef HISTORY_INTERVAL_MILISECONDS
 #define HISTORY_INTERVAL_MILISECONDS 600000 // 10 minutes
 #endif
@@ -50,12 +53,7 @@ class DataProvider: public IProviderCallbacks {
                           bool enableWifiSettings = false,
                           bool enableBatteryService = false,
                           bool enableFRCService = false,
-                          IWifiLibraryWrapper* pWifiLibrary = nullptr)
-        : _BLELibrary(libraryWrapper), _enableWifiSettings(enableWifiSettings),
-          _enableBatteryService(enableBatteryService),
-          _enalbeFRCService(enableFRCService),
-          _sampleConfig(sampleConfigSelector.at(dataType)),
-          _pWifiLibaray(pWifiLibrary){};
+                          IWifiLibraryWrapper* pWifiLibrary = nullptr);
     ~DataProvider(){};
     void begin();
     void writeValueToCurrentSample(float value, SignalType signalType);

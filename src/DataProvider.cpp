@@ -1,6 +1,28 @@
 #include "DataProvider.h"
 #include <math.h>
 
+// UPT Core 0.9.1+ moved types to sensirion::upt::core namespace
+using namespace sensirion::upt::core;
+
+// Helper: initialises the UPT Core mapping (idempotent) and returns the
+// SampleConfig for the requested DataType.  Works with UPT Core >= 0.9.1.
+static SampleConfig _getSampleConfig(DataType dataType) {
+    InitSampleConfigurationMapping();
+    return GetSampleConfiguration(dataType);
+}
+
+DataProvider::DataProvider(IBLELibraryWrapper& libraryWrapper,
+                           DataType dataType,
+                           bool enableWifiSettings,
+                           bool enableBatteryService,
+                           bool enableFRCService,
+                           IWifiLibraryWrapper* pWifiLibrary)
+    : _BLELibrary(libraryWrapper), _enableWifiSettings(enableWifiSettings),
+      _enableBatteryService(enableBatteryService),
+      _enalbeFRCService(enableFRCService),
+      _sampleConfig(_getSampleConfig(dataType)),
+      _pWifiLibaray(pWifiLibrary) {}
+
 void DataProvider::begin() {
     _setupBLEInfrastructure();
 
@@ -58,12 +80,11 @@ void DataProvider::writeValueToCurrentSample(float value,
     }
 
     // Get relevant metaData
-    uint16_t (*encodingFunction)(float value) =
-        _sampleConfig.sampleSlots.at(signalType).encodingFunction;
+    // Note: call encodingFunction directly — works for both raw function
+    // pointer (UPT Core <= 0.9.4) and FunctionWrapper (UPT Core >= 0.9.5).
     size_t offset = _sampleConfig.sampleSlots.at(signalType).offset;
-
-    // Convert float to 16 bit int
-    uint16_t convertedValue = encodingFunction(value);
+    uint16_t convertedValue =
+        _sampleConfig.sampleSlots.at(signalType).encodingFunction(value);
     _currentSample.writeValue(convertedValue, offset);
 }
 
@@ -136,7 +157,7 @@ void DataProvider::handleDownload() {
 }
 
 void DataProvider::setSampleConfig(DataType dataType) {
-    _sampleConfig = sampleConfigSelector.at(dataType);
+    _sampleConfig = _getSampleConfig(dataType);
     _sampleHistory.setSampleSize(_sampleConfig.sampleSizeBytes);
 }
 
